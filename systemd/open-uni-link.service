@@ -1,0 +1,13 @@
+[Unit]
+Description=OpenUniLink fan and RGB daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/openunilink daemon --config /etc/openunilink/config.yaml
+Restart=on-failure
+User=root
+#TODO: how to support non-root users via udev rules?
+
+[Install]
+WantedBy=multi-user.target
