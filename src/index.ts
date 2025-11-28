@@ -3,22 +3,25 @@ import { mainCli } from './cli/openUniLinkCtl';
 import { mainDaemon } from './deamon';
 
 async function main() {
-  const [, , modeOrCommand, ...rest] = process.argv;
+  const argv = process.argv.slice(2);
+  const modeOrCommand = argv[0];
 
-  // If the first arg is literally "daemon", treat it as daemon mode.
   if (modeOrCommand === 'daemon') {
-    const configFlagIndex = rest.indexOf('--config');
+    // Daemon mode: parse a very simple --config and run forever
+    const configFlagIndex = argv.indexOf('--config');
     const configPath
-      = configFlagIndex >= 0 && rest[configFlagIndex + 1]
-        ? rest[configFlagIndex + 1]
+      = configFlagIndex >= 0 && argv[configFlagIndex + 1]
+        ? argv[configFlagIndex + 1]
         : '/etc/openunilink/config.yaml';
 
     await mainDaemon(configPath);
     return;
   }
 
-  // Otherwise, passing everything to the CLI
-  await mainCli(process.argv.slice(2));
+  // CLI mode (discover, sensors, status, etc.)
+  await mainCli(argv);
+
+  process.exit(process.exitCode ?? 0);
 }
 
 void main();

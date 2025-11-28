@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "main": "dist/index.js",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/bundle.js",
-    "build:ts": "tsc --noEmit",
-    "dev": "ts-node src/index.ts daemon --config ./config/example.config.yaml",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/bundle.js --external:node-hid",
+    "build:ts": "tsc",
+    "dev": "ts-node src/index.ts",
     "lint": "eslint src --ext .ts",
     "lint-fix": "eslint --ext.ts --fix",
     "sea:blob": "node --experimental-sea-config sea-config.json",
@@ -27,6 +27,7 @@
     "node-hid": "^3.2.0",
     "pino": "^10.1.0",
     "systeminformation": "^5.27.11",
+    "usb": "^2.16.0",
     "yaml": "^2.8.1"
   },
   "devDependencies": {

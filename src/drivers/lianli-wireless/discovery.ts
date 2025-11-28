@@ -9,8 +9,7 @@ import {
 } from './protocol';
 
 export async function discoverLianLiWireless(): Promise<DiscoveredDevice[]> {
-  const ctrl: LianLiWirelessControllerInfo | null
-    = discoverLianLiWirelessController();
+  const ctrl: LianLiWirelessControllerInfo | null = discoverLianLiWirelessController();
 
   if (!ctrl) {
     return [];
@@ -25,15 +24,14 @@ export async function discoverLianLiWireless(): Promise<DiscoveredDevice[]> {
   devices.push({
     driverType: 'lianli-wireless',
     id: ctrl.id,
-    description: `L-Wireless controller (${ctrl.product ?? 'unknown'})`,
+    description: `L-Wireless controller`,
     details: {
       vendorId: ctrl.vendorId,
-      productId: ctrl.productId,
-      path: ctrl.path,
-      manufacturer: ctrl.manufacturer,
-      product: ctrl.product,
-      serialNumber: ctrl.serialNumber,
-      seriesHint: ctrl.seriesHint,
+      // productId: ctrl.productId,
+      // manufacturer: ctrl.manufacturer,
+      // product: ctrl.product,
+      // serialNumber: ctrl.serialNumber,
+      // seriesHint: ctrl.seriesHint,
     },
   });
 

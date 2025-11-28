@@ -15,55 +15,39 @@ import tempHandler from './handlers/tempHandler';
  */
 export async function mainCli(argv: string[]): Promise<void> {
   const program = new Command();
+  const DEFAULT_CONFIG = '/etc/openunilink/config.yaml';
 
   program.name('openunilink').description('OpenUniLink control CLI');
-  program
-    .option(
-      '-c, --config <path>',
-      'Config file path',
-      '/etc/openunilink/config.yaml',
-    );
 
   program
     .command('discover')
+    .option('-c, --config <string>', 'Config file path', DEFAULT_CONFIG)
     .description('Discover supported devices (e.g. L-Wireless receivers)')
     .action(discoverHandler);
 
   program
     .command('sensors')
     .description('Show temperatures as seen by OpenUniLink')
-    .action(async () => {
-      const opts = program.opts<{ config: string }>();
-
-      return sensorsHandler(opts);
-    });
+    .option('-c, --config <string>', 'Config file path', DEFAULT_CONFIG)
+    .action(async (opts: { config: string }) => sensorsHandler(opts));
 
   program
     .command('status')
     .description('Show current profile and per-cluster target PWM based on temps')
-    .action(async () => {
-      const opts = program.opts<{ config: string }>();
-
-      return statusHandler(opts);
-    });
+    .option('-c, --config <string>', 'Config file path', DEFAULT_CONFIG)
+    .action(async (opts: { config: string }) => statusHandler(opts));
 
   program
     .command('list')
     .description('List configured clusters')
-    .action(async () => {
-      const opts = program.opts<{ config: string }>();
-
-      return listHandler(opts);
-    });
+    .option('-c, --config <string>', 'Config file path', DEFAULT_CONFIG)
+    .action(async (opts: { config: string }) => listHandler(opts));
 
   program
     .command('temp')
     .description('Print current temps')
-    .action(async () => {
-      const opts = program.opts<{ config: string }>();
+    .option('-c, --config <string>', 'Config file path', DEFAULT_CONFIG)
+    .action(async (opts: { config: string }) => tempHandler(opts));
 
-      return tempHandler(opts);
-    });
-
-  await program.parseAsync(argv);
+  await program.parseAsync(argv, { from: 'user' });
 }

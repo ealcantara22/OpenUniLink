@@ -4,7 +4,7 @@ import {
   discoverLianLiWirelessController,
   type LianLiWirelessControllerInfo,
 } from './controllerDiscovery';
-import { discoverLianLiWireless } from './discovery';
+import { discoverLianLiWireless } from './discovery'; // your generic discover wrapper
 import { LianLiWirelessProtocol } from './protocol';
 
 export class LianLiWirelessDriver implements Driver {
@@ -50,13 +50,6 @@ export class LianLiWirelessDriver implements Driver {
 
 let sharedProtocol: LianLiWirelessProtocol | null = null;
 
-/**
- * Retrieves the shared instance of the LianLiWirelessProtocol.
- * If the protocol instance does not already exist, it initializes a new instance
- * using the discovered LianLi Wireless Controller. Throws an error if no controller is found.
- *
- * @return {LianLiWirelessProtocol} The shared instance of the LianLiWirelessProtocol.
- */
 function getSharedProtocol(): LianLiWirelessProtocol {
   if (sharedProtocol) return sharedProtocol;
 
@@ -70,21 +63,6 @@ function getSharedProtocol(): LianLiWirelessProtocol {
   return sharedProtocol;
 }
 
-/**
- * LianLiWirelessFactory is a factory object responsible for creating and managing
- * instances of LianLi wireless drivers. This factory is primarily used to handle
- * functionality related to the 'lianli-wireless' type of driver, including creation
- * and discovery of compatible devices.
- *
- * Properties:
- * - type: Represents the type of the driver. For this factory, the type is 'lianli-wireless'.
- *
- * Methods:
- * - create(config: DriverInstanceConfig): Creates and returns a new instance of a
- *   LianLiWirelessDriver using the specified configuration and shared protocol.
- *
- * - discover(): Discovers and returns a list of available LianLi wireless devices asynchronously.
- */
 export const LianLiWirelessFactory: DriverFactory = {
   type: 'lianli-wireless',
 

@@ -1,67 +1,93 @@
-import HID from 'node-hid';
+import { usb } from 'usb';
 
-export interface LianLiWirelessControllerInfo {
-  id: string; // e.g. 'llw-ctrl-1'
-  vendorId: number;
+export interface ControllerEndpointRef {
   productId: number;
-  path?: string;
-  manufacturer?: string;
-  product?: string;
-  serialNumber?: string;
-  seriesHint?: string;
+  busNumber: number;
+  deviceAddress: number;
 }
 
-// Central place for supported VID/PIDs.
-const SUPPORTED_WIRELESS_VIDS = [0x0416]; // Winbond used by Lian Li
-const SUPPORTED_WIRELESS_PIDS = [0x8040, 0x8041]; // example from TL docs; extend as needed
+export interface LianLiWirelessControllerInfo {
+  id: string; // logical ID, e.g. 'llw-ctrl-1'
+  vendorId: number; // 0x0416 (decimal 1046)
+  tx?: ControllerEndpointRef; // transmitter USB function
+  rx?: ControllerEndpointRef; // receiver USB function
+  // Optional, but nice to have if I can get them:
+  // manufacturer?: string;
+  // product?: string;
+  // serialNumber?: string;
+  // seriesHint?: string; // 'tl' / 'sl' etc.
+}
+
+const VENDOR_WINBOND = 0x0416;
+
+// TX and RX device IDs for a UNI SL120 Wireless Controller
+// 1046:32832 -> 0x0416:0x8040 (TX)
+// 1046:32833 -> 0x0416:0x8041 (RX)
+const PRODUCT_TX = 0x8040;
+const PRODUCT_RX = 0x8041;
 
 /**
- * Discovers and retrieves information about a connected Lian Li Wireless Controller.
- * Searches through available HID devices that match supported vendor and product IDs.
- * If multiple controllers are detected, a warning is logged, and only the first one is returned.
+ * Discovers and identifies a Lian Li wireless controller connected to the system via USB.
+ * The method searches for TX and RX devices matching the known vendor and product IDs for the controller.
+ * If both TX and RX devices are found, their details are included in the returned information object.
+ * If no devices are found, it returns null.
+ * In case of multiple TX or RX devices, only the first of each is used.
  *
- * @return {LianLiWirelessControllerInfo | null} Information about the discovered wireless controller, or null if none is found.
+ * @return {LianLiWirelessControllerInfo | null} An object containing details of the discovered Lian Li wireless controller, or null if no such controller is found.
  */
-export function discoverLianLiWirelessController():
-  LianLiWirelessControllerInfo | null {
-  const devices = HID.devices();
+export function discoverLianLiWirelessController(): LianLiWirelessControllerInfo | null {
+  const devices = usb.getDeviceList();
 
-  const matches = devices.filter(d => {
-    const vid = d.vendorId ?? 0;
-    const pid = d.productId ?? 0;
+  const txCandidates = devices.filter(dev => {
+    const desc = dev.deviceDescriptor;
 
-    return SUPPORTED_WIRELESS_VIDS.includes(vid)
-      && SUPPORTED_WIRELESS_PIDS.includes(pid);
+    return desc.idVendor === VENDOR_WINBOND
+      && desc.idProduct === PRODUCT_TX;
   });
 
-  if (matches.length === 0) {
+  const rxCandidates = devices.filter(dev => {
+    const desc = dev.deviceDescriptor;
+
+    return desc.idVendor === VENDOR_WINBOND
+      && desc.idProduct === PRODUCT_RX;
+  });
+
+  if (txCandidates.length === 0 && rxCandidates.length === 0) {
+    // No wireless controller present
     return null;
   }
 
-  if (matches.length > 1) {
-    // This *shouldn't* happen in normal Lian Li setups,
-    // but if it does, pick the first and warn.
+  if (txCandidates.length > 1 || rxCandidates.length > 1) {
     console.warn(
-      `OpenUniLink: found ${matches.length} L-Wireless controllers; `
-      + 'using the first one. This configuration is not officially supported.',
+      `OpenUniLink: multiple TX (${txCandidates.length}) or RX `
+      + `(${rxCandidates.length}) devices found; `
+      + 'only one kit per PC is officially supported, using the first of each.',
     );
   }
 
-  const m = matches[0];
-  const product = m.product?.toLowerCase() ?? '';
-  let seriesHint: string | undefined;
+  const txDev = txCandidates[0];
+  const rxDev = rxCandidates[0];
 
-  if (product.includes('tl')) seriesHint = 'tl';
-  else if (product.includes('sl')) seriesHint = 'sl';
-
-  return {
+  const info: LianLiWirelessControllerInfo = {
     id: 'llw-ctrl-1',
-    vendorId: m.vendorId ?? 0,
-    productId: m.productId ?? 0,
-    path: m.path,
-    manufacturer: m.manufacturer,
-    product: m.product,
-    serialNumber: m.serialNumber,
-    seriesHint,
+    vendorId: VENDOR_WINBOND,
   };
+
+  if (txDev) {
+    info.tx = {
+      productId: PRODUCT_TX,
+      busNumber: txDev.busNumber,
+      deviceAddress: txDev.deviceAddress,
+    };
+  }
+
+  if (rxDev) {
+    info.rx = {
+      productId: PRODUCT_RX,
+      busNumber: rxDev.busNumber,
+      deviceAddress: rxDev.deviceAddress,
+    };
+  }
+
+  return info;
 }
